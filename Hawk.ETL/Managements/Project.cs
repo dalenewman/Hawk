@@ -4,6 +4,7 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.IO;
 using System.Linq;
+using System.Windows.Controls.WpfPropertyGrid.Attributes;
 using Hawk.Core.Connectors;
 using Hawk.Core.Utils;
 using Hawk.Core.Utils.MVVM;
@@ -13,16 +14,16 @@ namespace Hawk.ETL.Managements
 {
     public class ProjectItem : PropertyChangeNotifier, IDictionarySerializable
     {
-        [DisplayName("保存路径")]
+        [LocalizedDisplayName("保存路径")]
         public string SavePath { get; set; }
 
-        [DisplayName("名称")]
+        [LocalizedDisplayName("名称")]
         public string Name { get; set; }
 
-        [DisplayName("描述")]
+        [LocalizedDisplayName("描述")]
         public string Description { get; set; }
 
-        [DisplayName("版本")]
+        [LocalizedDisplayName("版本")]
         public int Version { get; set; }
 
 
@@ -69,20 +70,20 @@ namespace Hawk.ETL.Managements
         {
             Tasks = new ObservableCollection<ProcessTask>();
             DBConnections = new ObservableCollection<IDataBaseConnector>();
+            ;
+
         }
 
 
-        [DisplayName("创建时间")]
-        public DateTime CreateTime { get; set; }
 
-        [DisplayName("数据库连接")]
+        [LocalizedDisplayName("数据库连接")]
         public ObservableCollection<IDataBaseConnector> DBConnections { get; set; }
 
 
         /// <summary>
         ///     在工程中保存的所有任务
         /// </summary>
-        [DisplayName("任务列表")]
+        [LocalizedDisplayName("任务列表")]
         public ObservableCollection<ProcessTask> Tasks { get; set; }
 
         public void Save()
@@ -152,10 +153,10 @@ namespace Hawk.ETL.Managements
 
                 foreach (var item in items)
                 {
-                    var proces= new ProcessTask();
+                    var proces = new ProcessTask();
                     proces.Project = this;
                     proces.DictDeserialize(item);
-                   
+
                     Tasks.Add(proces);
                 }
             }
@@ -164,16 +165,31 @@ namespace Hawk.ETL.Managements
             {
                 var items = docu["DBConnections"] as FreeDocument;
 
-                if (items?.Children == null) return;
-                foreach (var item in items.Children)
+                if (items?.Children != null)
                 {
-                    var type = item["TypeName"].ToString();
-                    var conn = PluginProvider.GetObjectByType<IDataBaseConnector>(type) as DBConnectorBase;
-                    if (conn == null) continue;
-                    conn.DictDeserialize(item);
+                    foreach (var item in items.Children)
+                    {
+                        var type = item["TypeName"].ToString();
+                        var conn = PluginProvider.GetObjectByType<IDataBaseConnector>(type) as DBConnectorBase;
+                        if (conn == null) continue;
+                        conn.DictDeserialize(item);
 
-                    DBConnections.Add(conn);
+                        DBConnections.Add(conn);
+                    }
                 }
+
+            }
+            if (DBConnections.FirstOrDefault(d => d.TypeName == "文件管理") == null)
+            {
+                var filemanager = new FileManager() {Name = "最近打开的文件"};
+                DBConnections.Add(filemanager);
+            }
+            if (DBConnections.FirstOrDefault(d => d.TypeName == "MongoDB") == null)
+            {
+                var mongo = new MongoDBConnector() {Name = "MongoDB连接器"};
+                mongo.DBName = "hawk";
+                DBConnections.Add(mongo);
+
             }
         }
     }

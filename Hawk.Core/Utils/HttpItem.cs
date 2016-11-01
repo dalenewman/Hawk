@@ -20,16 +20,16 @@ namespace Hawk.Core.Utils
             Encoding = EncodingType.UTF8;
             Allowautoredirect = true;
             Encoding = EncodingType.Unknown;
+            Parameters = "User-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2272.89 Safari/537.36";
         }
 
         [PropertyEditor("CodeEditor")]
         public string Parameters { get; set; }
 
 
-        [Browsable(false)]
-        public FreeDocument paradict { get; set; }
+      
 
-        public string HeaderToString(FreeDocument docu)
+        public static  string HeaderToString(FreeDocument docu)
         {
             StringBuilder sb=new StringBuilder();
             foreach (var d in docu)
@@ -153,7 +153,6 @@ namespace Hawk.Core.Utils
         /// </summary>
         public bool Allowautoredirect { get; set; }
 
-        public WebHeaderCollection ResponseHeaders { get; set; }
 
 
         public override string ToString()

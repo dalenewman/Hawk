@@ -5,6 +5,7 @@ using System.Linq;
 using System.Windows.Controls.WpfPropertyGrid.Attributes;
 using Hawk.Core.Connectors;
 using Hawk.Core.Utils;
+using Hawk.Core.Utils.Logs;
 using Hawk.Core.Utils.Plugins;
 using Hawk.ETL.Interfaces;
 using Hawk.ETL.Managements;
@@ -23,10 +24,11 @@ namespace Hawk.ETL.Plugins.Generators
         public ETLBase()
         {
             processManager = MainDescription.MainFrm.PluginDictionary["模块管理"] as IProcessManager;
+            ETLRange = "";
         }
 
-        [DisplayName("子流-选择")]
-        [Description("输入ETL的任务名称")]
+        [LocalizedDisplayName("子流-选择")]
+        [LocalizedDescription("输入ETL的任务名称")]
         public string ETLSelector
         {
             get { return _etlSelector; }
@@ -39,6 +41,11 @@ namespace Hawk.ETL.Plugins.Generators
             }
         }
 
+        [LocalizedDisplayName("调用范围")]
+        [LocalizedDescription("设定调用子流的模块范围，例如2:30表示从第2个到第30个子模块将会启用，其他的模块不启用")]
+        public string ETLRange { get; set; }
+
+
         protected SmartETLTool etl { get; set; }
 
         public void SetExecute(bool value)
@@ -50,31 +57,31 @@ namespace Hawk.ETL.Plugins.Generators
         {
             var dict = this.UnsafeDictSerialize();
             dict.Add("Type", GetType().Name);
-            dict.Add("Group", "Transformer");
+
             return dict;
         }
+
 
         public virtual void DictDeserialize(IDictionary<string, object> docu, Scenario scenario = Scenario.Database)
         {
             this.UnsafeDictDeserialize(docu);
         }
 
-        [Category("1.基本选项"), PropertyOrder(1), DisplayName("原列名")]
+        [LocalizedCategory("1.基本选项"), PropertyOrder(1), DisplayName("输入列")]
         public string Column { get; set; }
 
-        [Category("1.基本选项")]
-        [DisplayName("标签")]
-        public string Name { get; set; }
 
-        [Category("1.基本选项")]
-        [DisplayName("启用")]
+        [LocalizedCategory("1.基本选项")]
+        [LocalizedDisplayName("启用")]
         [PropertyOrder(5)]
         public bool Enabled { get; set; }
 
 
-        [DisplayName("介绍")]
+        [LocalizedDisplayName("介绍")]
         [PropertyOrder(100)]
-        public string Description {
+        [PropertyEditor("CodeEditor")]
+        public string Description
+        {
             get
             {
                 var item = AttributeHelper.GetCustomAttribute(GetType());
@@ -84,8 +91,8 @@ namespace Hawk.ETL.Plugins.Generators
             }
         }
 
-        [Category("1.基本选项")]
-        [DisplayName("类型")]
+        [LocalizedCategory("1.基本选项")]
+        [LocalizedDisplayName("类型")]
         [PropertyOrder(0)]
         public string TypeName
         {
@@ -104,7 +111,6 @@ namespace Hawk.ETL.Plugins.Generators
 
         public virtual bool Init(IEnumerable<IFreeDocument> datas)
         {
-
             if (string.IsNullOrEmpty(ETLSelector))
                 return false;
             mainstream =
@@ -112,8 +118,6 @@ namespace Hawk.ETL.Plugins.Generators
                     .FirstOrDefault(d => d.CurrentETLTools.Contains(this));
             etl =
                 processManager.CurrentProcessCollections.FirstOrDefault(d => d.Name == ETLSelector) as SmartETLTool;
-            if (mainstream!=null&&mainstream.Name == this.Name)
-                throw new Exception("子流程不能调用自身，否则会引起循环调用");
             if (etl != null)
             {
                 return true;
@@ -121,14 +125,17 @@ namespace Hawk.ETL.Plugins.Generators
 
             var task = processManager.CurrentProject.Tasks.FirstOrDefault(d => d.Name == ETLSelector);
             if (task == null)
-                return false;
+
+            {
+                throw new NullReferenceException($"can't find a ETL Module named {ETLSelector}");
+            }
 
             ControlExtended.UIInvoke(() => { task.Load(false); });
 
             etl =
                 processManager.CurrentProcessCollections.FirstOrDefault(d => d.Name == ETLSelector) as SmartETLTool;
 
-         
+
             etl.InitProcess(true);
             return etl != null;
         }
@@ -142,11 +149,26 @@ namespace Hawk.ETL.Plugins.Generators
         {
             var processes = new List<IColumnProcess>();
 
-
-            foreach (var tool in etl.CurrentETLTools)
+            var range = ETLRange.Split(':');
+            var start = 0;
+            var end = etl.CurrentETLTools.Count;
+            if (range.Length == 2)
             {
-                
-                    processes.Add(tool);
+                try
+                {
+                    start = int.Parse(range[0]);
+                    end = int.Parse(range[1]);
+                    if (end <= start)
+                        throw new Exception("第二个数字应该比第一个数更大");
+                }
+                catch (Exception ex)
+                {
+                    XLogSys.Print.Error("子流范围表达式错误，请检查:" + ex.Message);
+                }
+            }
+            foreach (var tool in etl.CurrentETLTools.Skip(start).Take(end - start))
+            {
+                processes.Add(tool);
             }
             return processes;
         }
@@ -155,10 +177,10 @@ namespace Hawk.ETL.Plugins.Generators
     [XFrmWork("子流-生成", "从其他数据清洗模块中生成序列，用以组合大模块")]
     public class EtlGE : ETLBase, IColumnGenerator
     {
-        [Description("当前位置")]
+        [LocalizedDescription("当前位置")]
         public int Position { get; set; }
 
-        [DisplayName("生成模式")]
+        [LocalizedDisplayName("生成模式")]
         public MergeType MergeType { get; set; }
 
         public IEnumerable<FreeDocument> Generate(IFreeDocument document = null)
@@ -175,6 +197,13 @@ namespace Hawk.ETL.Plugins.Generators
         {
             return null;
         }
+
+        public override FreeDocument DictSerialize(Scenario scenario = Scenario.Database)
+        {
+            var data = base.DictSerialize(scenario);
+            data.SetValue("Group", "Generator");
+            return data;
+        }
     }
 
 
@@ -183,12 +212,12 @@ namespace Hawk.ETL.Plugins.Generators
     {
         private EnumerableFunc func;
 
-        [DisplayName("添加到任务")]
-        [Description("勾选后，本子任务会添加到任务管理器中")]
+        [LocalizedDisplayName("添加到任务")]
+        [LocalizedDescription("勾选后，本子任务会添加到任务管理器中")]
         public bool AddTask { get; set; }
 
-        [DisplayName("新列名")]
-        [Description("从原始数据中传递到子执行流的列，多个列用空格分割")]
+        [LocalizedDisplayName("输出列")]
+        [LocalizedDescription("从原始数据中传递到子执行流的列，多个列用空格分割")]
         public string NewColumn { get; set; }
 
         public override bool Init(IEnumerable<IFreeDocument> datas)
@@ -197,6 +226,13 @@ namespace Hawk.ETL.Plugins.Generators
             var process = GetProcesses().ToList();
             func = etl.Aggregate(d => d, process, true);
             return true;
+        }
+
+        public override FreeDocument DictSerialize(Scenario scenario = Scenario.Database)
+        {
+            var data = base.DictSerialize(scenario);
+            data.SetValue("Group", "Executor");
+            return data;
         }
 
         public IEnumerable<IFreeDocument> Execute(IEnumerable<IFreeDocument> documents)
@@ -236,7 +272,7 @@ namespace Hawk.ETL.Plugins.Generators
     [XFrmWork("字典转换", "将两列数据，转换为一行数据，拖入的列为key")]
     public class DictTF : TransformerBase
     {
-        [DisplayName("值列名")]
+        [LocalizedDisplayName("值列名")]
         public string ValueColumn { get; set; }
 
         public override bool Init(IEnumerable<IFreeDocument> docus)
@@ -279,8 +315,17 @@ namespace Hawk.ETL.Plugins.Generators
         private EnumerableFunc func;
         private IEnumerable<IColumnProcess> process;
 
-        [DisplayName("新列名")]
-        [Description("从原始数据中传递到子执行流的列，多个列用空格分割")]
+        public EtlTF()
+        {
+            NewColumn = "";
+            IsCycle = false;
+        }
+
+        [LocalizedDisplayName("递归到下列")]
+        public bool IsCycle { get; set; }
+
+        [LocalizedDisplayName("输出列")]
+        [LocalizedDescription("从原始数据中传递到子执行流的列，多个列用空格分割")]
         public string NewColumn { get; set; }
 
         [Browsable(false)]
@@ -300,19 +345,43 @@ namespace Hawk.ETL.Plugins.Generators
             data.AddRange(result);
             return null;
         }
-        [DisplayName("返回多个数据")]
+
+        [LocalizedDisplayName("返回多个数据")]
         public bool IsMultiYield { get; set; }
 
         public IEnumerable<IFreeDocument> TransformManyData(IEnumerable<IFreeDocument> datas)
         {
             foreach (var data in datas)
             {
-                var result = etl.Generate(process, IsExecute, new List<IFreeDocument> {data.Clone()});
-                foreach (var item in result)
+                if (IsCycle)
                 {
-                    yield return item.MergeQuery(data, NewColumn);
+                    var newdata = data;
+                    while (string.IsNullOrEmpty(newdata[Column].ToString()) == false)
+                    {
+                        var result =
+                            etl.Generate(process, IsExecute, new List<IFreeDocument> {newdata.Clone()}).FirstOrDefault();
+                        if (result == null)
+                            break;
+                        yield return result.Clone();
+                        newdata = result;
+                    }
+                }
+                else
+                {
+                    var result = etl.Generate(process, IsExecute, new List<IFreeDocument> {data.Clone()});
+                    foreach (var item in result)
+                    {
+                        yield return item.MergeQuery(data, NewColumn);
+                    }
                 }
             }
+        }
+
+        public override FreeDocument DictSerialize(Scenario scenario = Scenario.Database)
+        {
+            var data = base.DictSerialize(scenario);
+            data.SetValue("Group", "Transformer");
+            return data;
         }
     }
 }

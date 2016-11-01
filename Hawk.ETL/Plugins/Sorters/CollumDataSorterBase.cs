@@ -37,9 +37,6 @@ namespace Hawk.ETL.Plugins.Sorters
             IsExecute = value;
         }
 
-        [Category("1.基本选项")]
-        [DisplayName("标签")]
-        public string Name { get; set; }
 
 
         public   void DictDeserialize(IDictionary<string, object> docu, Scenario scenario = Scenario.Database)
@@ -47,15 +44,15 @@ namespace Hawk.ETL.Plugins.Sorters
            this.UnsafeDictDeserialize(docu);
         }
 
-        [Category("1.基本选项")]
-        [DisplayName("排序方式")]
+        [LocalizedCategory("1.基本选项")]
+        [LocalizedDisplayName("排序方式")]
         public SortType SortType { get; set; }
 
         private bool _enabled;
 
 
-        [Category("1.基本选项")]
-        [DisplayName("启用")]
+        [LocalizedCategory("1.基本选项")]
+        [LocalizedDisplayName("启用")]
         [PropertyOrder(5)]
 
         public bool Enabled
@@ -98,12 +95,12 @@ namespace Hawk.ETL.Plugins.Sorters
 
         }
 
-        [DisplayName("介绍")]
+        [LocalizedDisplayName("介绍")]
         [PropertyOrder(100)]
         public string Description { get; }
 
-        [Category("1.基本选项")]
-        [DisplayName("类型")]
+        [LocalizedCategory("1.基本选项")]
+        [LocalizedDisplayName("类型")]
         [PropertyOrder(0)]
         public string TypeName
         {

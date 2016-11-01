@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
@@ -20,7 +21,7 @@ using Hawk.Core.Utils.Plugins;
 using Hawk.ETL.Interfaces;
 using Hawk.ETL.Managements;
 using Hawk.ETL.Plugins.Transformers;
-
+using System.Web.Script.Serialization;
 namespace Hawk.ETL.Process
 {
     [XFrmWork("数据清洗", "可方便的对表格数据整理，分组，筛选和排序"
@@ -64,9 +65,9 @@ namespace Hawk.ETL.Process
 
         #region Properties
 
-        [DisplayName("命令")]
+        [LocalizedDisplayName("命令")]
         [PropertyOrder(3)]
-        [Category("4.执行")]
+        [LocalizedCategory("4.执行")]
         public ReadOnlyCollection<ICommand> Commands3
         {
             get
@@ -111,7 +112,7 @@ namespace Hawk.ETL.Process
                 CurrentETLTools.Add(tool);
             else
             {
-                CurrentETLTools.Insert(ETLMount - 1, tool);
+                CurrentETLTools.Insert(ETLMount , tool);
             }
         }
 
@@ -124,10 +125,10 @@ namespace Hawk.ETL.Process
         [Browsable(false)]
         public ListCollectionView ETLToolsView { get; set; }
 
-        [Category("3.调试")]
+        [LocalizedCategory("3.调试")]
         [PropertyOrder(2)]
-        [DisplayName("模块数量")]
-        [Description("只选取工作流中前n个模块，来构造工作流")]
+        [LocalizedDisplayName("模块数量")]
+        [LocalizedDescription("只选取工作流中前n个模块，来构造工作流")]
         public int ETLMount
         {
             get { return _etlMount; }
@@ -141,10 +142,10 @@ namespace Hawk.ETL.Process
             }
         }
 
-        [Category("3.调试")]
+        [LocalizedCategory("3.调试")]
         [PropertyOrder(1)]
-        [DisplayName("采样量")]
-        [Description("只获取数据表的前n行")]
+        [LocalizedDisplayName("采样量")]
+        [LocalizedDescription("只获取数据表的前n行")]
         public int SampleMount
         {
             get { return _SampleMount; }
@@ -157,13 +158,13 @@ namespace Hawk.ETL.Process
             }
         }
 
-        [Category("3.调试")]
-        [DisplayName("显示调试详情")]
+        [LocalizedCategory("3.调试")]
+        [LocalizedDisplayName("显示调试详情")]
         [PropertyOrder(3)]
         public bool DisplayDetail { get; set; }
 
-        [Category("3.调试")]
-        [DisplayName("命令")]
+        [LocalizedCategory("3.调试")]
+        [LocalizedDisplayName("命令")]
         [PropertyOrder(4)]
         public ReadOnlyCollection<ICommand> Commands5
         {
@@ -271,7 +272,7 @@ namespace Hawk.ETL.Process
                     ETLToolsView.Filter = FilterMethod;
                 }
                 OnPropertyChanged("SearchText");
-            }
+                }
         }
 
         [Browsable(false)]
@@ -280,9 +281,9 @@ namespace Hawk.ETL.Process
         [Browsable(false)]
         public dynamic etls => CurrentETLTools;
 
-        [Category("2.清洗流程")]
-        [DisplayName("已加载")]
-        [Description("当前位于工作流中的的所有工作模块")]
+        [LocalizedCategory("2.清洗流程")]
+        [LocalizedDisplayName("已加载")]
+        [LocalizedDescription("当前位于工作流中的的所有工作模块")]
         public ObservableCollection<IColumnProcess> CurrentETLTools { get; set; }
 
         [Browsable(false)]
@@ -293,8 +294,12 @@ namespace Hawk.ETL.Process
 
         private void ExecuteAllExecutors()
         {
+            bool has_execute = CurrentETLTools.FirstOrDefault(d => d is IDataExecutor)!=null;
+            string info = "确定启动执行器?";
+            if (!has_execute)
+                info =info+ "没有在主流程中发现执行器。";
             if (MainDescription.IsUIForm &&
-                ControlExtended.UserCheck("确定启动执行器？", "警告信息"))
+                ControlExtended.UserCheck(info, "警告信息"))
 
             {
                 ExecuteDatas();
@@ -340,6 +345,7 @@ namespace Hawk.ETL.Process
 
         public override bool Init()
         {
+            this.mudoleHasInit = true;
             RefreshSamples();
             CurrentETLTools.CollectionChanged += (s, e) =>
             {
@@ -360,7 +366,34 @@ namespace Hawk.ETL.Process
                     };
                 }
             };
-            return true;
+        //    var dict = new Dictionary<string, Dictionary<string, Dictionary<string, string>>>(); 
+        //   foreach(var tool in AllETLTools)
+        //    {
+        //        var obj = PluginProvider.GetObjectByType<IColumnProcess>(tool.MyType.Name);
+        //        var typedic = new Dictionary<string, Dictionary<string,string>>();
+        //        this.CurrentETLTools.Add(obj);
+        //        var properties= tool.MyType.GetProperties();
+        //        foreach(var prop in properties)
+        //        {
+        //            var propdic = new Dictionary<string, string>(); 
+        //           var name= prop.GetCustomAttributes(typeof(LocalizedDisplayNameAttribute), true).FirstOrDefault() as LocalizedDisplayNameAttribute;
+        //           var desc= prop.GetCustomAttributes(typeof(LocalizedDescriptionAttribute), true).FirstOrDefault() as LocalizedDescriptionAttribute;
+        //           var cate= prop.GetCustomAttributes(typeof(LocalizedCategoryAttribute), true).FirstOrDefault() as LocalizedCategoryAttribute;
+
+        //                propdic.Add("Name", name?.DisplayName);
+        //                propdic.Add("Desc", desc?.Description);
+        //                propdic.Add("Category", cate?.Category);
+        //            typedic.Add(prop.Name, propdic);
+
+        //        }
+
+        //        dict.Add(tool.MyType.Name, typedic);               
+        //    }
+
+        //    JavaScriptSerializer serialier = new JavaScriptSerializer();
+        //var res=    serialier.JsObjectSerialize(dict);
+        //    File.WriteAllText("D:\\fuck.json",res);
+          return true;
         }
 
         #endregion
@@ -375,7 +408,7 @@ namespace Hawk.ETL.Process
         public bool IsUISupport { get; set; }
 
 
-        public void InitProcess(bool isexecute)
+            public void InitProcess(bool isexecute)
         {
             foreach (var item in CurrentETLTools.Where(d => d.Enabled))
             {
@@ -502,11 +535,19 @@ namespace Hawk.ETL.Process
                     index = etls.IndexOf(tolistTransformer);
 
                     var beforefunc = Aggregate(func, etls.Take(index), true);
-
-                    paratask = TemporaryTask.AddTempTask("清洗任务并行化", beforefunc(new List<IFreeDocument>())
+                    List<IFreeDocument> taskbuff=new List<IFreeDocument>();
+                        paratask = TemporaryTask.AddTempTask("清洗任务并行化", beforefunc(new List<IFreeDocument>())
                         ,
                         d2 =>
-                        {
+                        {//TODO:这种分组方式可能会丢数据！！
+                            if (taskbuff.Count < tolistTransformer.GroupMount)
+                            {
+                                taskbuff.Add(d2);
+                                return;
+                                
+                            }
+                            var newtaskbuff = taskbuff.ToList();
+                            taskbuff.Clear();
                             if (paratask.IsPause == false &&
                                 SysProcessManager.CurrentProcessTasks.Count > MaxThreadCount)
                             {
@@ -520,9 +561,8 @@ namespace Hawk.ETL.Process
 
                             var rcount = -1;
                             int.TryParse(countstr, out rcount);
-                            var list = new List<IFreeDocument> {d2};
                             var afterfunc = Aggregate(func, etls.Skip(index + 1), true);
-                            var task = TemporaryTask.AddTempTask(name, afterfunc(list), d => { },
+                            var task = TemporaryTask.AddTempTask(name, afterfunc(newtaskbuff), d => { },
                                 null, rcount, false);
                             if (tolistTransformer.DisplayProgress)
                                 ControlExtended.UIInvoke(() => SysProcessManager.CurrentProcessTasks.Add(task));
@@ -593,10 +633,13 @@ namespace Hawk.ETL.Process
                     var t = objs[1] as XFrmWorkAttribute;
 
                     var item = PluginProvider.GetObjectInstance(t.MyType) as IColumnProcess;
-                    item.Column = p.Name;
-                    ETLMount++;
+                    if(string.IsNullOrEmpty(p.Name)==false)
+                        item.Column = p.Name;
+             
                     InsertModule(item);
+                    ETLMount++;
                     RefreshSamples();
+                  
                 }
             }
             if (sender == "Click")
@@ -679,15 +722,15 @@ namespace Hawk.ETL.Process
 
 
         [PropertyOrder(1)]
-        [Category("4.执行")]
-        [DisplayName("工作模式")]
+        [LocalizedCategory("4.执行")]
+        [LocalizedDisplayName("工作模式")]
         public GenerateMode GenerateMode { get; set; }
 
 
         [PropertyOrder(2)]
-        [Category("4.执行")]
-        [Description("在并行模式工作时，线程池所承载的最大线程数")]
-        [DisplayName("最大线程数")]
+        [LocalizedCategory("4.执行")]
+        [LocalizedDescription("在并行模式工作时，线程池所承载的最大线程数")]
+        [LocalizedDisplayName("最大线程数")]
         public int MaxThreadCount { get; set; }
 
 
@@ -704,9 +747,12 @@ namespace Hawk.ETL.Process
             return func(source);
         }
 
+        private bool mudoleHasInit = false;
         public void RefreshSamples(bool canGetDatas = true)
         {
             if (SysProcessManager == null)
+                return;
+            if(!mudoleHasInit)
                 return;
             if (SysProcessManager.CurrentProcessTasks.Any(d => d.Publisher == this))
             {

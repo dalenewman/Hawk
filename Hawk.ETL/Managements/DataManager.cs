@@ -26,7 +26,7 @@ namespace Hawk.ETL.Managements
 {
     public class QueryEntity
     {
-        public Action<List<IFreeDocument>> GetQueryFunc;
+        public Action<List<FreeDocument>> GetQueryFunc;
         public List<ICommand> commands;
 
         public QueryEntity()
@@ -34,7 +34,7 @@ namespace Hawk.ETL.Managements
             commands = new List<ICommand>();
             commands.Add(new Command("执行查询", async obj =>
             {
-                List<IFreeDocument> datas = null;
+                List<FreeDocument> datas = null;
                 try
                 {
                     ControlExtended.SetBusy(true);
@@ -57,23 +57,23 @@ namespace Hawk.ETL.Managements
             }, obj => string.IsNullOrEmpty(SQL) == false));
         }
 
-        [DisplayName("当前表")]
+        [LocalizedDisplayName("当前表")]
         [PropertyOrder(1)]
         public TableInfo TableInfo { get; set; }
 
-        [DisplayName("当前连接")]
+        [LocalizedDisplayName("当前连接")]
         [PropertyOrder(0)]
         public IDataBaseConnector Connector { get; set; }
 
-        [DisplayName("查询字符串")]
-        [Description("根据数据库的不同，可在此处输入JS（MongoDB）和标准SQL")]
+        [LocalizedDisplayName("查询字符串")]
+        [LocalizedDescription("根据数据库的不同，可在此处输入JS（MongoDB）和标准SQL")]
         [StringEditor("SQL")]
         [PropertyOrder(2)]
         [PropertyEditor("DynamicScriptEditor")]
         public string SQL { get; set; }
 
         [PropertyOrder(3)]
-        [DisplayName("执行")]
+        [LocalizedDisplayName("执行")]
         public ReadOnlyCollection<ICommand> Commands => new ReadOnlyCollection<ICommand>(commands);
     }
 
@@ -129,15 +129,9 @@ namespace Hawk.ETL.Managements
         }
 
 
-        public FrmState FrmState
-        {
-            get { return FrmState.Mini; }
-        }
+        public FrmState FrmState => FrmState.Mini;
 
-        public object UserControl
-        {
-            get { return null; }
-        }
+        public object UserControl => null;
 
         #endregion
 
@@ -166,7 +160,9 @@ namespace Hawk.ETL.Managements
 
 
             fileName = exporter.FileName;
-            AddDataCollection(exporter.ReadFile(), Path.GetFileNameWithoutExtension(fileName));
+
+            ControlExtended.SafeInvoke(
+                () => AddDataCollection(exporter.ReadFile(), Path.GetFileNameWithoutExtension(fileName)),LogType.Important);
             return GetCollection(fileName);
         }
 
@@ -218,7 +214,7 @@ namespace Hawk.ETL.Managements
             var dataAll = new List<IFreeDocument>();
             
                 var  task = TemporaryTask.AddTempTask(dataName + "数据导入",
-                    db.GetEntities(dataName, typeof (FreeDocument), mount), dataAll.Add,null,table!=null?table.Size:-1,notifyInterval:1000);
+                 db.GetEntities(dataName, mount), dataAll.Add,null,table!=null?table.Size:-1,notifyInterval:1000);
             processManager.CurrentProcessTasks.Add(task);
                 await Task.Run(
                     () => task.Wait());
@@ -329,11 +325,21 @@ namespace Hawk.ETL.Managements
                 async obj =>
                 {
                     var items = obj as TableInfo;
+                    List<IFreeDocument> dataAll = null;
+                    try
+                    {
+                        dataAll= await
+                      GetDataFromDB(items.Connector, items.Name, true,
+                          items.Connector is FileManager ? -1 : 200);
 
-                    List<IFreeDocument> dataAll =
-                        await
-                            GetDataFromDB(items.Connector, items.Name, true,
-                                items.Connector is FileManager ? -1 : 200);
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show("文件打开失败" + ex.Message);
+                        return;
+                    }
+                  
+                 
                     if (dataAll == null || dataAll.Count == 0)
                     {
                         XLogSys.Print.Warn("没有在表中的发现可用的数据");

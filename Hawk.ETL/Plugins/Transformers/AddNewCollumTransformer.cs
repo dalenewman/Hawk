@@ -1,4 +1,6 @@
-﻿using System.ComponentModel;
+﻿using System.Collections.Generic;
+using System.ComponentModel;
+using System.Windows.Controls.WpfPropertyGrid.Attributes;
 using Hawk.Core.Connectors;
 using Hawk.Core.Utils;
 using Hawk.Core.Utils.Plugins;
@@ -14,7 +16,7 @@ namespace Hawk.ETL.Plugins.Transformers
             NewColumn = "NewColumn";
         }
 
-        [DisplayName("生成值")]
+        [LocalizedDisplayName("生成值")]
         public string NewValue { get; set; }
 
         public override object TransformData(IFreeDocument free)
@@ -22,4 +24,6 @@ namespace Hawk.ETL.Plugins.Transformers
             return free.Query(NewValue);
         }
     }
+
+
 }

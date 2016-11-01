@@ -24,7 +24,6 @@ namespace Hawk.ETL.Interfaces
         string Column { get; set; }
 
       void SetExecute(bool value);
-      string Name { get; set; }
 
         bool Enabled { get; set; }
 
@@ -93,7 +92,7 @@ namespace Hawk.ETL.Interfaces
         Append,
         Merge,
         Cross,
-        Mix
+        Mix,
     }
 
     public class GeneratorBase : PropertyChangeNotifier, IColumnGenerator
@@ -127,12 +126,12 @@ namespace Hawk.ETL.Interfaces
             this.UnsafeDictDeserialize(docu);
 
         }
-        [Category("1.基本选项")]
+        [LocalizedCategory("1.基本选项")]
         [PropertyOrder(1)]
-        [DisplayName("列名")]
+        [LocalizedDisplayName("列名")]
         public string Column { get; set; }
 
-        [DisplayName("介绍")]
+        [LocalizedDisplayName("介绍")]
         [PropertyOrder(100)]
         public string Description
         {
@@ -145,14 +144,9 @@ namespace Hawk.ETL.Interfaces
             }
         }
 
-        [Category("1.基本选项")]
-        [PropertyOrder(5)]
-        [DisplayName("标签")]
-        public string Name { get; set; }
 
-
-        [Category("1.基本选项")]
-        [DisplayName("启用")]
+        [LocalizedCategory("1.基本选项")]
+        [LocalizedDisplayName("启用")]
         [PropertyOrder(5)]
         public bool Enabled
         {
@@ -187,8 +181,8 @@ namespace Hawk.ETL.Interfaces
             return true;
         }
 
-        [Category("1.基本选项")]
-        [DisplayName("当前遍历位置")]
+        [LocalizedCategory("1.基本选项")]
+        [LocalizedDisplayName("当前遍历位置")]
         public int Position { get; set; }
 
         public virtual IEnumerable<FreeDocument> Generate(IFreeDocument document=null)
@@ -198,7 +192,7 @@ namespace Hawk.ETL.Interfaces
 
                
             
-            [DisplayName("生成模式")]
+            [LocalizedDisplayName("生成模式")]
         public MergeType MergeType { get; set; }
 
         public virtual int? GenerateCount()

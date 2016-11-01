@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
@@ -49,6 +49,10 @@
     <Reference Include="Jayrock.Sandbox">
       <HintPath>..\Includes\Jayrock.Sandbox.dll</HintPath>
     </Reference>
+    <Reference Include="Jint, Version=2.9.0.0, Culture=neutral, PublicKeyToken=2e92ba9c8d81157f, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\Hawk\Includes\Jint.dll</HintPath>
+    </Reference>
     <Reference Include="Microsoft.Dynamic, Version=1.1.0.20, Culture=neutral, PublicKeyToken=7f709c5b713576e1, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\Includes\Microsoft.Dynamic.dll</HintPath>
@@ -58,6 +62,7 @@
     <Reference Include="PresentationFramework" />
     <Reference Include="System" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Runtime.Serialization" />
     <Reference Include="System.Web" />
     <Reference Include="System.Web.Extensions" />
     <Reference Include="System.Windows.Controls.WpfPropertyGrid, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
@@ -76,6 +81,8 @@
   <ItemGroup>
     <Compile Include="Crawlers\BuffHelper.cs" />
     <Compile Include="Crawlers\CrawlItem.cs" />
+    <Compile Include="Crawlers\JavaScriptAnalyzer.cs" />
+    <Compile Include="Crawlers\NetworkManager.cs" />
     <Compile Include="Crawlers\ProxyProvider.cs" />
     <Compile Include="Crawlers\XPath.cs" />
     <Compile Include="Crawlers\XPathAnalyzer.cs" />
@@ -121,6 +128,7 @@
     <Compile Include="Plugins\Transformers\CrawlerTF.cs" />
     <Compile Include="Plugins\Transformers\JoinDBTF.cs" />
     <Compile Include="Plugins\Transformers\RepeatTF.cs" />
+    <Compile Include="Plugins\Transformers\ResponseTF.cs" />
     <Compile Include="Plugins\Transformers\Time2StrTF.cs" />
     <Compile Include="Plugins\Generators\EtlGE.cs" />
     <Compile Include="Plugins\Transformers\HtmlTF.cs" />
@@ -132,6 +140,7 @@
     <Compile Include="Plugins\Transformers\RegexTF.cs" />
     <Compile Include="Plugins\Transformers\NumberTF.cs" />
     <Compile Include="Plugins\Transformers\StrExtractTF.cs" />
+    <Compile Include="Plugins\Transformers\TnTF.cs" />
     <Compile Include="Plugins\Transformers\ToListTF.cs" />
     <Compile Include="Plugins\Transformers\TransformerBase.cs" />
     <Compile Include="Plugins\Transformers\TrimTF.cs" />

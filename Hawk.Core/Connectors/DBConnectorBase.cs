@@ -6,12 +6,13 @@ using System.Data;
 using System.Data.SqlClient;
 using System.Linq;
 using System.Text;
+using System.Windows.Controls.WpfPropertyGrid.Attributes;
 using System.Windows.Controls.WpfPropertyGrid.Controls;
 using System.Windows.Input;
 using Hawk.Core.Utils;
+using Hawk.Core.Utils.Logs;
 using Hawk.Core.Utils.MVVM;
 using Hawk.Core.Utils.Plugins;
-using Xceed.Wpf.Toolkit.PropertyGrid.Attributes;
 
 namespace Hawk.Core.Connectors
 {
@@ -38,9 +39,9 @@ namespace Hawk.Core.Connectors
 
         private string dataType;
 
-        [DisplayName("类型")]
-        [PropertyOrder(1)]
-        [Description("该数据的类型")]
+        [LocalizedDisplayName("类型")]
+        [Xceed.Wpf.Toolkit.PropertyGrid.Attributes.PropertyOrder(1)]
+        [LocalizedDescription("该数据的类型")]
         public string DataType
         {
             get { return dataType; }
@@ -54,29 +55,29 @@ namespace Hawk.Core.Connectors
             }
         }
 
-        [DisplayName("权重")]
+        [LocalizedDisplayName("权重")]
         [PropertyOrder(3)]
         public double Importance { get; set; }
 
-        [DisplayName("主键")]
+        [LocalizedDisplayName("主键")]
         [PropertyOrder(2)]
         public bool IsKey { get; set; }
 
 
-        [DisplayName("描述")]
+        [LocalizedDisplayName("描述")]
         [PropertyOrder(4)]
         public string Description { get; set; }
 
         /// <summary>
         ///     启用虚拟化，则该值在需要时被动态计算
         /// </summary>
-        [DisplayName("虚拟值")]
+        [LocalizedDisplayName("虚拟值")]
         public bool IsVirtual { get; set; }
 
-        [DisplayName("名称")]
+        [LocalizedDisplayName("名称")]
         [PropertyOrder(0)]
         public string Name { get; set; }
-        [DisplayName("可空")]
+        [LocalizedDisplayName("可空")]
         [PropertyOrder(0)]
         public bool CanNull { get; set; }
 
@@ -132,16 +133,16 @@ namespace Hawk.Core.Connectors
             ColumnInfos=new List<ColumnInfo>();
         }
 
-        [DisplayName("列特性")]
+        [LocalizedDisplayName("列特性")]
         public List<ColumnInfo> ColumnInfos { get; set; }
 
-        [DisplayName("表大小")]
+        [LocalizedDisplayName("表大小")]
         public int Size { get; set; }
 
-        [DisplayName("名称")]
+        [LocalizedDisplayName("名称")]
         public string Name { get; set; }
 
-        [DisplayName("描述")]
+        [LocalizedDisplayName("描述")]
         public string Description { get; set; }
 
         [Browsable(false)]
@@ -186,7 +187,7 @@ namespace Hawk.Core.Connectors
 
     public interface IEnumerableProvider<T>
     {
-        IEnumerable<T> GetEnumerable(string tableName, Type type = null);
+        IEnumerable<T> GetEnumerable(string tableName);
 
         bool CanSkip(string tableName);
     }
@@ -233,7 +234,7 @@ namespace Hawk.Core.Connectors
                 sb.Append($"'{value}',");
             }
             sb.Remove(sb.Length - 1, 1);
-            string sql = string.Format("INSERT INTO {0} VALUES({1})", dbTableName, sb);
+            string sql = $"INSERT INTO {dbTableName} VALUES({sb})";
             return sql;
         }
 
@@ -288,28 +289,28 @@ namespace Hawk.Core.Connectors
         private bool _IsUseable;
         private string name;
 
-        [Category("参数设置")]
-        [DisplayName("操作表名")]
+        [LocalizedCategory("参数设置")]
+        [LocalizedDisplayName("操作表名")]
         public ExtendSelector<TableInfo> TableNames { get; set; }
 
-        [DisplayName("服务器地址")]
-        [Category("1.连接管理")]
+        [LocalizedDisplayName("服务器地址")]
+        [LocalizedCategory("1.连接管理")]
         [PropertyOrder(2)]
         public string Server { get; set; }
 
-        [DisplayName("用户名")]
-        [Category("1.连接管理")]
+        [LocalizedDisplayName("用户名")]
+        [LocalizedCategory("1.连接管理")]
         [PropertyOrder(3)]
         public string UserName { get; set; }
 
-        [DisplayName("密码")]
-        [Category("1.连接管理")]
+        [LocalizedDisplayName("密码")]
+        [LocalizedCategory("1.连接管理")]
         [PropertyOrder(4)]
       //  [PropertyEditor("PasswordEditor")]
         public string Password { get; set; }
 
-        [Category("参数设置")]
-        [DisplayName("数据库类型")]
+        [LocalizedCategory("参数设置")]
+        [LocalizedDisplayName("数据库类型")]
         public string TypeName
         {
             get
@@ -325,23 +326,23 @@ namespace Hawk.Core.Connectors
 
         public virtual void CreateDataBase(string dbname)
         {
-            ExecuteNonQuery(string.Format("CREATE DATABASE {0}", dbname));
+            ExecuteNonQuery($"CREATE DATABASE {dbname}");
         }
 
-        public virtual List<IFreeDocument> QueryEntities(string querySQL, out int count,
-            string tablename = null, Type type = null)
+        public virtual List<FreeDocument> QueryEntities(string querySQL, out int count,
+            string tablename = null)
         {
             count = 0;
-            return new List<IFreeDocument>();
+            return new List<FreeDocument>();
         }
 
         [Browsable(false)]
         public virtual string ConnectionString { get; set; }
 
 
-        [Category("1.连接管理")]
-        [DisplayName("数据库名称")]
-        [PropertyOrder(5)]
+        [LocalizedCategory("1.连接管理")]
+        [LocalizedDisplayName("数据库名称")]
+        [PropertyOrder(2)]
         public string DBName { get; set; }
 
 
@@ -362,9 +363,9 @@ namespace Hawk.Core.Connectors
         }
 
 
-        [Category("1.连接管理")]
-        [PropertyOrder(4)]
-        [DisplayName("连接状态")]
+        [LocalizedCategory("1.连接管理")]
+        [PropertyOrder(10)]
+        [LocalizedDisplayName("连接状态")]
         public bool IsUseable
         {
             get { return _IsUseable; }
@@ -379,16 +380,16 @@ namespace Hawk.Core.Connectors
         }
 
 
-        public virtual List<IFreeDocument> TryFindEntities(string tableName, IDictionary<string, object> search
-           , Type type = null, int count = -1, DBSearchStrategy searchStrategy = DBSearchStrategy.Contains)
+        public virtual List<FreeDocument> TryFindEntities(string tableName, IDictionary<string, object> search
+           , List<string>keys,  int count = -1, DBSearchStrategy searchStrategy = DBSearchStrategy.Contains)
         {
          
-            return new List<IFreeDocument>();
+            return new List<FreeDocument>();
         }
 
-        [Category("1.连接管理")]
+        [LocalizedCategory("1.连接管理")]
         [PropertyOrder(1)]
-        [DisplayName("连接名称")]
+        [LocalizedDisplayName("连接名称")]
         public string Name
         {
             get { return name; }
@@ -408,9 +409,9 @@ namespace Hawk.Core.Connectors
 
         #region IDataBaseConnector
 
-        [Category("1.连接管理")]
+        [LocalizedCategory("1.连接管理")]
         [PropertyOrder(5)]
-        [DisplayName("自动连接")]
+        [LocalizedDisplayName("自动连接")]
         public bool AutoConnect { get; set; }
 
         public virtual void BatchInsert(IEnumerable<IFreeDocument> source, string dbTableName)
@@ -434,7 +435,7 @@ namespace Hawk.Core.Connectors
         {
             try
             {
-                string sql = string.Format("DROP TABLE   {0}", GetTableName(tableName));
+                string sql = $"DROP TABLE   {GetTableName(tableName)}";
                 ExecuteNonQuery(sql);
                 RefreshTableNames();
             }
@@ -444,22 +445,22 @@ namespace Hawk.Core.Connectors
         }
 
 
-        public virtual IEnumerable<IFreeDocument> GetEntities(string tableName, Type type, int mount = -1,
+        public virtual IEnumerable<FreeDocument> GetEntities(string tableName, int mount = -1,
             int skip = 0)
         {
             string sql = null;
             if (mount == 0)
             {
-                sql = string.Format("Select * from {0}", GetTableName(tableName));
+                sql = $"Select * from {GetTableName(tableName)}";
             }
             else
             {
-                sql = string.Format("Select * from {0} LIMIT {1} OFFSET {2}", tableName, mount, skip);
+                sql = $"Select * from {tableName} LIMIT {mount} OFFSET {skip}";
             }
 
 
             DataTable data = GetDataTable(sql);
-            return Table2Data(data, type);
+            return Table2Data(data);
         }
 
 
@@ -482,7 +483,7 @@ namespace Hawk.Core.Connectors
             {
                 foreach (var val in data)
                 {
-                    sb.Append(String.Format(" {0} = '{1}',", val.Key, val.Value));
+                    sb.Append($" {val.Key} = '{val.Value}',");
                 }
 
                 sb = sb.Remove(sb.Length - 1, 1);
@@ -490,7 +491,7 @@ namespace Hawk.Core.Connectors
 
             try
             {
-                ExecuteNonQuery(String.Format("update {0} set {1} where {2};", GetTableName(tableName), sb, ToString()));
+                ExecuteNonQuery($"update {GetTableName(tableName)} set {sb} where {ToString()};");
             }
 
             catch
@@ -524,13 +525,13 @@ namespace Hawk.Core.Connectors
             return sqlConnBuilder.ConnectionString;
         }
 
-        protected List<IFreeDocument> Table2Data(DataTable data, Type type)
+        protected List<FreeDocument> Table2Data(DataTable data)
         {
-            var result = new List<IFreeDocument>();
+            var result = new List<FreeDocument>();
             string[] titles = (from object column in data.Columns select column.ToString()).ToArray();
             foreach (DataRow dr in data.Rows)
             {
-                var data2 = Activator.CreateInstance(type) as IFreeDocument;
+                var data2  =new FreeDocument();
 
 
                 SetObjects(data2, dr.ItemArray, titles);
@@ -558,7 +559,7 @@ namespace Hawk.Core.Connectors
 
         #endregion
 
-        [DisplayName("执行")]
+        [LocalizedDisplayName("执行")]
         [PropertyOrder(20)]
         public ReadOnlyCollection<ICommand> Commands
         {
@@ -570,7 +571,8 @@ namespace Hawk.Core.Connectors
                     {
                         new Command("连接数据库", obj =>
                         {
-                              ConnectDB();
+
+                            ControlExtended.SafeInvoke(() => ConnectDB(), LogType.Important, "连接数据库");
                             if (IsUseable)
                             {
                                 RefreshTableNames();

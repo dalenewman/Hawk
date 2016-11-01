@@ -29,7 +29,7 @@
         <DataTemplate x:Key="DataTemplateList">
             <Grid HorizontalAlignment="Stretch" Height="65.334" Width="100" d:DesignWidth="210.332" d:DesignHeight="136.471">
                 <Label Content="{Binding Name}" Margin="0" Height="Auto" VerticalAlignment="Bottom" FontSize="12" d:LayoutOverrides="GridBoX" HorizontalAlignment="Center" Width="Auto"/>
-                <Rectangle Stroke="Black"  ToolTip="{Binding Description}" RadiusX="13" RadiusY="3" StrokeThickness="0" Width="45" Height="45" HorizontalAlignment="Center" VerticalAlignment="Top">
+                <Rectangle Stroke="Black"  ToolTip="{Binding Description}" RadiusX="13" RadiusY="3" StrokeThickness="0" Width="45" Height="45" HorizontalAlignment="Center" VerticalAlignment="Top" MouseLeftButtonUp="Rectangle_MouseLeftButtonUp">
                     <Rectangle.Fill>
                         <LinearGradientBrush EndPoint="0.5,1" StartPoint="0.3,0">
                             <GradientStop Color="#FF3B3B3B" Offset="0.418"/>
@@ -72,7 +72,7 @@
         </DataTemplate>
         <DataTemplate x:Key="DataTemplate2">
             <StackPanel Height="30" Width="140" d:DesignWidth="126.167" d:DesignHeight="39.987" Orientation="Horizontal">
-                <TextBlock Margin="2,0,8,0"  mvvm:ListBindingDoubleClick.Property="{Binding Data.Commands[0], Source={StaticResource BindingProxy}}"     TextWrapping="Wrap" Text="{Binding TypeName}" ToolTip="{Binding GroupName}" FontSize="14.667" Width="Auto" HorizontalAlignment="Left" VerticalAlignment="Center"/>
+                <TextBlock Margin="2,0,8,0"  mvvm:ListBindingDoubleClick.Property="{Binding Data.Commands[0], Source={StaticResource BindingProxy}}"     TextWrapping="Wrap" Text="{Binding TypeName}"  FontSize="14.667" Width="Auto" HorizontalAlignment="Left" VerticalAlignment="Center"/>
                 <CheckBox Content="" IsChecked="{Binding Enabled}"  VerticalAlignment="Center" HorizontalAlignment="Center" ToolTip="是否激活"/>
             </StackPanel>
         </DataTemplate>
@@ -96,7 +96,7 @@
                     <RowDefinition Height="0.256*"/>
                     <RowDefinition Height="0.744*"/>
                 </Grid.RowDefinitions>
-                <ListView x:FieldModifier="public"  ItemsSource="{Binding Documents}" x:Name="DataList" Margin="0,8.624,0,0" ScrollViewer.HorizontalScrollBarVisibility="Disabled" Grid.Row="1"/>
+                <ListView x:FieldModifier="public"  ItemsSource="{Binding Documents}" x:Name="DataList" ScrollViewer.HorizontalScrollBarVisibility="Disabled" Grid.Row="1"/>
                 <ListBox  x:FieldModifier="public" x:Name="ToolList" Margin="0,8,0,0" ItemsSource="{Binding Dict}"    ItemsPanel="{DynamicResource ItemsPanelTemplate1}" ItemTemplate="{DynamicResource DataTemplate1}" ScrollViewer.VerticalScrollBarVisibility="Disabled" ScrollViewer.HorizontalScrollBarVisibility="Disabled" VerticalContentAlignment="Stretch"/>
                 <GridSplitter HorizontalAlignment="Stretch" Height="5" VerticalAlignment="Bottom" ResizeDirection="Rows" Margin="0" d:LayoutOverrides="VerticalAlignment, GridBox"/>
 

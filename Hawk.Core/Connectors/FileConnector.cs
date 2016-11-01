@@ -4,9 +4,11 @@ using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Windows.Controls.WpfPropertyGrid.Attributes;
 using Hawk.Core.Utils;
 using Hawk.Core.Utils.Plugins;
 using Xceed.Wpf.Toolkit.PropertyGrid.Attributes;
+using EncodingType = Hawk.Core.Utils.EncodingType;
 
 namespace Hawk.Core.Connectors
 {
@@ -29,26 +31,27 @@ namespace Hawk.Core.Connectors
         protected FileConnector()
         {
             PropertyNames = new Dictionary<string, string>();
-            DataType = typeof(FreeDocument);
         }
-
-       
-
 
         #endregion
 
         #region Properties
 
+        [Browsable(false)]
         public virtual bool ShouldConfig => false;
 
-        public Type DataType { get; set; }
 
-
+        [LocalizedDisplayName("后缀名")]
         public virtual string ExtentFileName => ".txt";
 
+        [Browsable(false)]
         public string FileName { get; set; }
+
+        [LocalizedDisplayName("文件编码")]
         public EncodingType EncodingType { get; set; }
 
+
+        [Browsable(false)]
         public Dictionary<string, string> PropertyNames { get; set; }
 
         #endregion
@@ -130,15 +133,15 @@ namespace Hawk.Core.Connectors
         }
 
 
-        public static IFreeDocument ReadDataFile(string path)
+        public static FreeDocument ReadDataFile(string path)
         {
             IFileConnector json = SmartGetExport(path);
             json.FileName = path;
-            IFreeDocument r = json.ReadFile().LastOrDefault();
+            FreeDocument r = json.ReadFile().LastOrDefault();
             return r;
         }
 
-        public static List<IFreeDocument> ReadGroupDataFile(string path)
+        public static List<FreeDocument> ReadGroupDataFile(string path)
         {
             IFileConnector json = SmartGetExport(path);
 
@@ -168,14 +171,12 @@ namespace Hawk.Core.Connectors
 
         #region IFileConnector
 
-        public virtual bool IsVirtual
-        {
-            get { return false; }
-        }
+        public virtual bool IsVirtual => false;
 
 
-        public abstract IEnumerable<IFreeDocument> ReadFile(Action<int> alreadyGetSize = null);
-    
+        public abstract IEnumerable<FreeDocument> ReadFile(Action<int> alreadyGetSize = null);
+
+
 
         public virtual string GetString(IEnumerable<IFreeDocument> datas)
         {

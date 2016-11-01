@@ -19,14 +19,14 @@ namespace Hawk.ETL.Plugins.Generators
 {
 
 
-    [XFrmWork("读取文件文本", "获取文件中的文本")]
+    [XFrmWork("读取文件文本", "获取文件中的全部纯文本内容，注意与【读取文件数据】区别")]
     public class ReadFileTextTF : TransformerBase
     {
         private BuffHelper<string> buffHelper = new BuffHelper<string>(50);
 
 
 
-        [DisplayName("编码")]
+        [LocalizedDisplayName("编码")]
         public EncodingType EncodingType { get; set; }
 
         public override object TransformData(IFreeDocument datas)
@@ -54,16 +54,18 @@ namespace Hawk.ETL.Plugins.Generators
 
 
 
-    [XFrmWork("读取文件数据", "从文件中读取内容")]
-    public class FileDataTransformer :TransformerBase 
+    [XFrmWork("读取文件数据", "从文件中读取数据内容，需要配置连接器属性")]
+    public class ReadFileTF :TransformerBase 
     {
 
-        public FileDataTransformer()
+        public ReadFileTF()
         {
             ConnectorSelector = new ExtendSelector<XFrmWorkAttribute>(PluginProvider.GetPluginCollection(typeof(IFileConnector)));
 
             ConnectorSelector.SelectChanged += (s, e) =>
             {
+                if(ConnectorSelector.SelectItem==null)
+                    return;
                 Connector = PluginProvider.GetObjectInstance<IFileConnector>(ConnectorSelector.SelectItem.Name);
                 OnPropertyChanged("Connector");
             };
@@ -92,8 +94,9 @@ namespace Hawk.ETL.Plugins.Generators
                 object name = p["Type"];
                 if (name != null)
                 {
-                     ConnectorSelector.SelectItem =
-                        coll.FirstOrDefault(d => d.Name == name.ToString());
+                    var result=
+                        coll.FirstOrDefault(d => d.MyType.Name == name.ToString());
+                    ConnectorSelector.SelectItem = result;
 
                     if (Connector != null)
                     {
@@ -104,10 +107,10 @@ namespace Hawk.ETL.Plugins.Generators
         }
 
 
-        [DisplayName("文件格式")]
+        [LocalizedDisplayName("文件格式")]
         public ExtendSelector<XFrmWorkAttribute> ConnectorSelector { get; set; }
 
-        [DisplayName(("连接器配置"))]
+        [LocalizedDisplayName(("连接器配置"))]
         [TypeConverter(typeof(ExpandableObjectConverter))]
         public IFileConnector Connector { get; set; }
 
@@ -141,16 +144,14 @@ namespace Hawk.ETL.Plugins.Generators
     [XFrmWork("写入文件文本", "写入文件中的文本")]
     public class WriteFileTextTF : DataExecutorBase
     {
-        private bool shouldUpdate;
-        private string _folderPath;
 
 
 
-        [DisplayName("编码")]
+        [LocalizedDisplayName("编码")]
         public EncodingType EncodingType { get; set; }
 
 
-        [DisplayName("要写入文件的完整路径")]
+        [LocalizedDisplayName("要写入文件的完整路径")]
         public string Path { get; set; }
 
         public override IEnumerable<IFreeDocument> Execute(IEnumerable<IFreeDocument> documents)

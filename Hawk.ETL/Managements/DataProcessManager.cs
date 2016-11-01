@@ -107,6 +107,23 @@ namespace Hawk.ETL.Managements
 
         private IDockableManager dockableManager;
 
+        public override bool Close()
+        {
+            foreach (var currentProcessCollection in CurrentProcessCollections)
+            {
+                currentProcessCollection.Close();
+            }
+            return true;
+        }
+
+        public void SaveCurrentTasks()
+        {
+            foreach (var process in CurrentProcessCollections)
+            {
+                SaveTask(process, false);
+            }
+            CurrentProject.Save();
+        }
         public override bool Init()
         {
             base.Init();
@@ -114,7 +131,39 @@ namespace Hawk.ETL.Managements
             dataManager = MainFrmUI.PluginDictionary["数据管理"] as IDataManager;
             propertyGridWindow = MainFrmUI.PluginDictionary["属性配置器"] as XFrmWorkPropertyGrid;
 
+            var aboutAuthor=new BindingAction("联系和打赏作者", d =>
+            {
+                var view = PluginProvider.GetObjectInstance<ICustomView>("关于作者");
+                var window = new Window();
+                window.Title = "关于作者";
+                window.Content = view;
+                window.ShowDialog();
+            });
+            var helplink = new BindingAction("使用文档", d =>
+            {
+                var url = "https://github.com/ferventdesert/Hawk/wiki";
+                System.Diagnostics.Process.Start(url);
+            });
 
+            var feedback = new BindingAction("反馈问题", d =>
+            {
+                var url = "https://github.com/ferventdesert/Hawk/issues";
+                System.Diagnostics.Process.Start(url);
+            });
+
+
+            var giveme = new BindingAction("捐赠", d =>
+            {
+                var url = "https://github.com/ferventdesert/Hawk/wiki/8.%E5%85%B3%E4%BA%8E%E4%BD%9C%E8%80%85";
+                System.Diagnostics.Process.Start(url);
+            });
+
+            var pluginCommands = new BindingAction("帮助");
+            pluginCommands.ChildActions.Add(helplink);
+            pluginCommands.ChildActions.Add(aboutAuthor);
+            pluginCommands.ChildActions.Add(feedback);
+            pluginCommands.ChildActions.Add(giveme);
+            MainFrmUI.CommandCollection.Add(pluginCommands);
             ProcessCollection = new ObservableCollection<IDataProcess>();
 
 
@@ -124,7 +173,7 @@ namespace Hawk.ETL.Managements
 
             sysCommand.ChildActions.Add(
                 new Command(
-                    "清空模块列表",
+                    "清空任务列表",
                     obj =>
                     {
                         if (MessageBox.Show("确定清空所有算法模块么？", "提示信息", MessageBoxButton.OKCancel) ==
@@ -137,17 +186,13 @@ namespace Hawk.ETL.Managements
 
             sysCommand.ChildActions.Add(
                 new Command(
-                    "保存全部模块",
+                    "保存全部任务",
                     obj =>
                     {
                         if (MessageBox.Show("确定保存所有算法模块么？", "提示信息", MessageBoxButton.OKCancel) ==
                             MessageBoxResult.OK)
                         {
-                            foreach (var process in CurrentProcessCollections)
-                            {
-                                SaveTask(process, false);
-                            }
-                            CurrentProject.Save();
+                            SaveCurrentTasks();
                         }
                     }, obj => true,
                     "clear"));
@@ -203,6 +248,19 @@ namespace Hawk.ETL.Managements
 
             var taskListAction = new BindingAction("任务列表命令");
 
+            taskListAction.ChildActions.Add(new Command("全选",
+                d => CurrentProcessTasks.Execute(d2 => d2.IsSelected = true), null, "check"));
+
+            taskListAction.ChildActions.Add(new Command("反选",
+                d => CurrentProcessTasks.Execute(d2 => d2.IsSelected =!d2.IsSelected), null, "redo"));
+
+            taskListAction.ChildActions.Add(new Command("暂停",
+                d => CurrentProcessTasks.Where(d2 => d2.IsSelected).Execute(d2 => d2.IsPause = true), null, "pause"));
+            taskListAction.ChildActions.Add(new Command("恢复",
+                d => CurrentProcessTasks.Where(d2 => d2.IsSelected).Execute(d2 => d2.IsPause = false), null, "play"));
+
+            taskListAction.ChildActions.Add(new Command("取消",
+               d => CurrentProcessTasks.RemoveElementsNoReturn(d2=>d2.IsSelected,d2=>d2.Cancel()), null,"delete"));
 
             BindingCommands.ChildActions.Add(taskListAction);
 
@@ -360,7 +418,6 @@ namespace Hawk.ETL.Managements
                     {
                         Name = process.Name,
                         Description = "任务描述",
-                        CreateTime = DateTime.Now
                     };
 
                     CurrentProject.Tasks.Add(task);
@@ -458,7 +515,7 @@ namespace Hawk.ETL.Managements
                 {
                     if (isAddToList)
                     {
-                        ProcessCollection.Add(process);
+                     ;
                         process.SysDataManager = dataManager;
 
                         process.SysProcessManager = this;
@@ -468,6 +525,10 @@ namespace Hawk.ETL.Managements
                             rc4.MainPluginLocation = MainFrmUI.MainPluginLocation;
                             rc4.MainFrm = MainFrmUI;
                         }
+                        var count = this.CurrentProcessCollections.Count(d => d.Name.Contains( process.TypeName));
+                        if (count > 0)
+                            process.Name = process.TypeName + count;
+                        ProcessCollection.Add(process);
                         XLogSys.Print.Info("已经成功添加" + process.TypeName + "到当前列表");
                     }
 

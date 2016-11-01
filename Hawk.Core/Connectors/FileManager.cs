@@ -3,16 +3,18 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
 using System.Linq;
+using System.Windows.Controls.WpfPropertyGrid.Attributes;
 using Hawk.Core.Connectors.Vitural;
-using Hawk.Core.Utils;
 using Hawk.Core.Utils.Plugins;
 using Microsoft.Win32;
+using EncodingType = Hawk.Core.Utils.EncodingType;
 
 namespace Hawk.Core.Connectors
 {
     [XFrmWork("文件管理",  "提供与历史文件交互的数据库服务", "")]
     public class FileManager : VirtualConnectorBase, IEnumerableProvider<IDictionarySerializable>
     {
+        [Browsable(false)]
         public string LastFileName { get; set; }
 
         public FileManager()
@@ -21,10 +23,12 @@ namespace Hawk.Core.Connectors
             {
                 CurrentTables.Insert(0, new TableInfo(openfile, this));
             }
+            AutoConnect = true;
+            ConnectDB();
         }
-        public IEnumerable<IDictionarySerializable> GetEnumerable(string tableName, Type type = null)
+        public IEnumerable<IDictionarySerializable> GetEnumerable(string tableName)
         {
-            return GetEntities2(tableName, type);
+            return GetEntities2(tableName);
         }
 
         public bool CanSkip(string tableName)
@@ -32,24 +36,19 @@ namespace Hawk.Core.Connectors
             return false;
         }
 
-        public override void DictDeserialize(IDictionary<string, object> docu, Scenario scenario = Scenario.Database)
+
+        public override IEnumerable<FreeDocument> GetEntities(
+            string tableName,  int mount = -1, int skip = 0)
         {
-            base.DictDeserialize(docu, scenario);
-       
+            return GetEntities2(tableName,  mount, skip).ToList();
         }
 
-        public override IEnumerable<IFreeDocument> GetEntities(
-            string tableName, Type type, int mount = -1, int skip = 0)
-        {
-            return GetEntities2(tableName, type, mount, skip).ToList();
-        }
-
-        [Category("参数设置")]
-        [DisplayName("编码方式")]
+        [LocalizedCategory("参数设置")]
+        [LocalizedDisplayName("编码方式")]
         public EncodingType EncodingType { get; set; }
 
-        private IEnumerable<IFreeDocument> GetEntities2(
-            string tableName, Type type, int mount = -1, int skip = 0)
+        private IEnumerable<FreeDocument> GetEntities2(
+            string tableName,  int mount = -1, int skip = 0)
         {
             TableInfo table = null;
             LastFileName = tableName;
@@ -77,7 +76,7 @@ namespace Hawk.Core.Connectors
                     {
                         CurrentTables.Remove(table);
                         TableNames.InformPropertyChanged("Collection");
-                        return new List<IFreeDocument>();
+                        return new List<FreeDocument>();
                     }
                     fileNames.Add(table.Description);
                 }
@@ -105,7 +104,7 @@ namespace Hawk.Core.Connectors
 
                       return connector.ReadFile().Skip(skip).Take(mount);
 
-                  return connector.ReadFile().Skip(skip);
+                  return connector.ReadFile().Skip(skip) ;
               });
 
 

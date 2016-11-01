@@ -38,7 +38,6 @@ namespace Hawk.ETL.Managements
         public virtual FreeDocument DictSerialize(Scenario scenario = Scenario.Database)
         {
             var docu = ProcessToDo.DictSerialize(scenario);
-            docu.SetValue("CreateTime", CreateTime);
             docu.SetValue("Name", Name);
             docu.SetValue("Description", Description);
             docu.SetValue("ScriptPath", ScriptPath);
@@ -50,7 +49,6 @@ namespace Hawk.ETL.Managements
             ProcessToDo.DictDeserialize(docu, scenario);
             Name = docu.Set("Name", Name);
             Description = docu.Set("Description", Description);
-            CreateTime = docu.Set("CreateTime", CreateTime);
             ScriptPath = docu.Set("ScriptPath", ScriptPath);
         }
 
@@ -127,7 +125,7 @@ namespace Hawk.ETL.Managements
             }, LogType.Important, $"加载{Name}任务", true);
         }
 
-        [DisplayName("脚本路径")]
+        [LocalizedDisplayName("脚本路径")]
         [PropertyOrder(6)]
         public string ScriptPath { get; set; }
 
